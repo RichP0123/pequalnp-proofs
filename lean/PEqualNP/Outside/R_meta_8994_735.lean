@@ -54,10 +54,12 @@ theorem PEqualNP.Outside.R_meta_8994_735
     have get (w : List ℕ) (i : ℕ) : (w.map (fun z => z.testBit k)).getD i false = (w.getD i 0).testBit k := by
       simp only [List.getD_eq_getElem?_getD,List.getElem?_map]
       cases w[i]? <;> simp
+    have andEval (l : List Bool) : GateOp.and.eval l=l.all id := rfl
+    have orEval (l : List Bool) : GateOp.or.eval l=l.any id := rfl
     have step_eq (ws : List ℕ) (g : Gate) (h : (g.op = GateOp.and ∨ g.op = GateOp.or) ∧ ∃ a b : ℕ, g.inputs = [a,b]) :
         stepB (ws.map (fun z => z.testBit k)) g = (packed ws g).map (fun z => z.testBit k) := by
       obtain ⟨op,a,b,ab⟩ := h
-      rcases op with op|op <;> simp [stepB,packed,op,ab,GateOp.eval,get,Nat.testBit_and,Nat.testBit_or]
+      rcases op with op|op <;> simp [stepB,packed,op,ab,andEval,orEval,get,Nat.testBit_and,Nat.testBit_or]
       all_goals cases ws[a]? <;> cases ws[b]? <;> simp
     have run (gs : List Gate) (h : ∀ g ∈ gs, (g.op = GateOp.and ∨ g.op = GateOp.or) ∧ ∃ a b : ℕ, g.inputs = [a,b]) (ws : List ℕ) :
         gs.foldl stepB (ws.map (fun z => z.testBit k)) = (gs.foldl packed ws).map (fun z => z.testBit k) := by
@@ -90,7 +92,7 @@ theorem PEqualNP.Outside.R_meta_8994_735
     exact ⟨e,he,by simp only [Bool.and_eq_true]; exact ⟨ext _ a,ext _ b⟩⟩
   have tests := (boundary p (f p) mono).mp (fun _=>rfl)
   let enc (g : Gate) : Bool × ℕ × ℕ := (g.op.eval [false,true],g.inputs.getD 0 0,g.inputs.getD 1 0)
-  obtain ⟨k,fail⟩ := synthesis p (C.gates.map enc) (by simpa only [List.length_map,Circuit.size] using (show C.size≤18 by omega)) C.output
+  obtain ⟨k,fail⟩ := synthesis p (C.gates.map enc) (by rw [List.length_map]; change C.size≤18; omega) C.output
   have shape (g : Gate) (hg : g∈C.gates) : (g.op=.and ∨ g.op=.or) ∧ ∃ a b : ℕ,g.inputs=[a,b] := by
     refine ⟨legal.1 g hg,?_⟩
     have len := legal.2.2 g hg
